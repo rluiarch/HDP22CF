@@ -1,0 +1,34 @@
+[
+  {
+    "ParameterKey": "AmbariInstanceType",
+    "ParameterValue": "m4.large"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "rlui"
+  },
+  {
+    "ParameterKey": "MasterInstanceType",
+    "ParameterValue": "m4.xlarge"
+  },
+  {
+    "ParameterKey": "MasterUseEBS",
+    "ParameterValue": "no"
+  },
+  {
+    "ParameterKey": "SSHLocation",
+    "ParameterValue": "0.0.0.0/0"
+  },
+  {
+    "ParameterKey": "WorkerInstanceCount",
+    "ParameterValue": "2"
+  },
+  {
+    "ParameterKey": "WorkerInstanceType",
+    "ParameterValue": "m4.2xlarge"
+  },
+  {
+    "ParameterKey": "WorkerUseEBS",
+    "ParameterValue": "no"
+  }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "Key": "Name",
+    "Value": "rlui-HDP-test"
+  },
+  {
+    "Key": "Team",
+    "Value": "Solution"
+  },
+  {
+    "Key": "Project",
+    "Value": "HDP-Test"
+  },
+  {
+    "Key": "Contact",
+    "Value": "Raymond"
+  },
+  {
+    "Key": "Environment",
+    "Value": "AWS"
+  },
+  {
+    "Key": "Organization",
+    "Value": "Portworx"
+  }
+]
