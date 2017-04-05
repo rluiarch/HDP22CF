@@ -31,6 +31,7 @@ The HDP cluster name will use the stack name e.g. STACKNAME=rlui-HDP-T007
    ``chmod +x hdp-install.sh``
    
    ``ambari_host=`hostname` cluster_name=rlui-HDP-T007 ./hdp-install.sh``
+   
    You will be asked to provide your AWS Key/Secret; since hdp-install.sh use AWS CLI to retrieve all stack component information, and then using sed and jq to assamble the Ambari cluster blue print.
    
 Login into Ambari node console http://<ambrai_node_IP_Address>:8080  
