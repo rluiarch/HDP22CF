@@ -13,7 +13,7 @@ change the following stack-name "rlui-HDP-T007" each time after repeatly using t
 You may want to update the parameter.json to change the instance type corresponding to HDP master and worker nodes.
 the following command need to run on an AWS CLI workstation which is configured on us-east-1; since only us-east-1 AMI is tested as of this written
 
-aws cloudformation create-stack --stack-name rlui-HDP-T007 --template-body file:///home/ec2-user/HDP-test1KKHHJX.json --parameters file:///home/ec2-user/parameter.json --tags file:///home/ec2-user/tags.json --capabilities CAPABILITY_IAM | tee stack.json
+```aws cloudformation create-stack --stack-name rlui-HDP-T007 --template-body file:///home/ec2-user/HDP-test1KKHHJX.json --parameters file:///home/ec2-user/parameter.json --tags file:///home/ec2-user/tags.json --capabilities CAPABILITY_IAM | tee stack.json```
 
 When the this Cloudformation stack creation complete successfully; either via CLI or AWS GUI to check.
 the Cloudformation will take about 20-25 min for this setup.
