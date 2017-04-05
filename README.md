@@ -4,9 +4,12 @@ Hortonworks Hadoop 2.2 AWS CloudFormation
 This cloudformation template will setup 4 node HDP cluster with  RHEL6.6 + Ambari 2.1.2 + HDP2.2
 
 # Component of this cluster
---Ambari node        1 X m4.large
---HDP Master node    1 X m4.xlarge
---HDP Worker node    2 X m4.xlarge
+
+-Ambari node        1 X m4.large
+
+-HDP Master node    1 X m4.xlarge
+
+-HDP Worker node    2 X m4.xlarge
 
 # Running the CF template
 change the following stack-name "rlui-HDP-T007" each time after repeatly using this command.
