@@ -60,18 +60,18 @@ echo 'fi' >> /etc/rc.local
 
 ##########################################################################################
 #Remove existing mount points
-sed '/^\/dev\/xvd[b-z]/d' -i /etc/fstab
+## sed '/^\/dev\/xvd[b-z]/d' -i /etc/fstab
 
 #Fromat emphemeral drives and create mounts
-for drv in `ls /dev/xv* | grep -v xvda`
-do
-  umount $drv || :
-  mkdir -p ${drv//dev/data}
-  echo "$drv ${drv//dev/data} ext4 defaults,noatime,nodiratime 0 0" >> /etc/fstab
-  nohup mkfs.ext4 -m 0 -T largefile4 $drv &
-done
-wait
+##for drv in `ls /dev/xv* | grep -v xvda`
+##do
+  ##umount $drv || :
+  ##mkdir -p ${drv//dev/data}
+  ##echo "$drv ${drv//dev/data} ext4 defaults,noatime,nodiratime 0 0" >> /etc/fstab
+  ##nohup mkfs.ext4 -m 0 -T largefile4 $drv &
+##done
+##wait
 
 ##########################################################################################
 # Re-size root partition
-(echo u;echo d; echo n; echo p; echo 1; cat /sys/block/xvda/xvda1/start; echo; echo w) | fdisk /dev/xvda || :
+##(echo u;echo d; echo n; echo p; echo 1; cat /sys/block/xvda/xvda1/start; echo; echo w) | fdisk /dev/xvda || :
