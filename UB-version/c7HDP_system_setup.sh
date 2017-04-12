@@ -1,4 +1,4 @@
-###########################################################################################
+############################################################################################
 # Disable SELINUX
 setenforce 0
 sed -i 's/\(^[^#]*\)SELINUX=enforcing/\1SELINUX=disabled/' /etc/selinux/config
@@ -15,7 +15,7 @@ echo 'vm.swappiness = 0' >> /etc/sysctl.conf
 
 ##########################################################################################
 # Disable some not-required services.
-/usr/bin/systemctl disable cups
+#/usr/bin/systemctl disable cups
 /usr/bin/systemctl disable postfix
 /usr/bin/systemctl disable iptables
 /usr/bin/systemctl disable ip6tables
