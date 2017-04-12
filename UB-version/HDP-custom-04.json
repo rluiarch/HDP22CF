@@ -181,7 +181,7 @@
             "   --resource ${resource}\n",
             "\n",
             "## Reboot Server\n",
-            "reboot"
+            "## reboot\n"
           ]]}
         }
       }
@@ -258,7 +258,7 @@
             "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref": "AWS::Region"}, " --resource MasterNode\n",
             "\n",
             "## Reboot Server\n",
-            "reboot"
+            "## reboot\n"
           ]]}
         }
       }
@@ -368,7 +368,7 @@
             "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource WorkerNodes\n",
             "\n",
             "## Reboot Server\n",
-            "reboot"
+            "## reboot\n"
           ]]}
         }
       }
