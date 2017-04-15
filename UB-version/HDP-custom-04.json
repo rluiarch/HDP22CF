@@ -16,30 +16,30 @@
       "ConstraintDescription": "must be a valid EC2 AMI ID"
     },
 
-	"EC2SecurityGroup": {
+        "EC2SecurityGroup": {
       "Type": "String"
     },
-	
-	
+
+
     "InstanceProfile": {
       "MinLength": "2",
       "Type": "String",
-      "Description": "The Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance (e.g., arn:aws:iam::087750371480:instance-profile/my_profile)"
-      
+      "Description": "The instance role name, not the arn string"
+
     },
 
     "HDPSubnet": {
        "Type": "String",
-	   "Description": "the subnet ID used for this cluster"
+           "Description": "the subnet ID used for this cluster"
     },
-	
-	"VPCZoneID": {
+
+        "VPCZoneID": {
        "Type": "CommaDelimitedList",
        "Description": "Coma delimited list of subnets"
     },
-	
+
     "Zone": {
-      "Type": "String", 
+      "Type": "String",
       "Description": "availability zone to launch this cluster"
     },
 
@@ -114,8 +114,8 @@
         ],
         "ImageId" : { "Ref": "ImageId" },
         "AvailabilityZone" : { "Ref" : "Zone" },
-		"NetworkInterfaces" : [{
-		  "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "NetworkInterfaces" : [{
+          "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
           "AssociatePublicIpAddress" : "true",
           "DeviceIndex"              : "0",
           "DeleteOnTermination"      : "true",
@@ -146,8 +146,8 @@
             "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
             "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
             "yum update -y aws-cfn-bootstrap\n",
-			"ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
-            "# /sbin/service cfn-hup restart\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
             "\n",
             "## Running setup script\n",
             "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup.sh -o /tmp/c7HDP_system_setup.sh",
@@ -159,7 +159,7 @@
             "## Install Ambari\n",
             "JAVA_HOME=/etc/alternatives/java_sdk\n",
 
-            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.1.2/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.2.1.0/ambari.repo -o /etc/yum.repos.d/ambari.repo",
             " || error_exit 'Ambari repo setup failed'\n",
             "yum install -y ambari-agent",
             " || error_exit 'Ambari Agent Installation failed'\n",
@@ -210,8 +210,8 @@
         ]]},
         "ImageId" : { "Ref": "ImageId" },
         "AvailabilityZone" : { "Ref" : "Zone" },
-		"NetworkInterfaces" : [{
-		  "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+                "NetworkInterfaces" : [{
+                  "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
           "AssociatePublicIpAddress" : "true",
           "DeviceIndex"              : "0",
           "DeleteOnTermination"      : "true",
@@ -234,8 +234,8 @@
             "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
             "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
             "yum update -y aws-cfn-bootstrap\n",
-			"ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
-            "# /sbin/service cfn-hup restart\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
             "\n",
             "## Running setup script\n",
             "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup.sh -o /tmp/c7HDP_system_setup.sh",
@@ -246,7 +246,7 @@
             "\n",
             "## Install Ambari\n",
             "JAVA_HOME=/etc/alternatives/java_sdk\n",
-            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.1.2/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.2.1.0/ambari.repo -o /etc/yum.repos.d/ambari.repo",
             " || error_exit 'Ambari repo setup failed'\n",
             "yum install -y ambari-agent",
             " || error_exit 'Ambari Agent Installation failed'\n",
@@ -344,8 +344,8 @@
             "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
             "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
             "yum update -y aws-cfn-bootstrap\n",
-			"ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
-            "# /sbin/service cfn-hup restart\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
             "\n",
             "## Running setup script\n",
             "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup.sh -o /tmp/c7HDP_system_setup.sh",
@@ -356,7 +356,7 @@
             "\n",
             "## Install Ambari\n",
             "JAVA_HOME=/etc/alternatives/java_sdk\n",
-            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.1.2/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.2.1.0/ambari.repo -o /etc/yum.repos.d/ambari.repo",
             " || error_exit 'Ambari repo setup failed'\n",
             "yum install -y ambari-agent",
             " || error_exit 'Ambari Agent Installation failed'\n",
