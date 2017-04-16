@@ -185,13 +185,15 @@ cat >> cluster.blueprint << 'EOF'
 EOF
 
 ## Create the blueprint & the clsuter
-export ambari_host=`hostname`
+#export ambari_host=`hostname`
 echo $ambari_host
 
-export cluster_name=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE |grep StackName |grep rlui |awk '{print $2}' |tr -d '"' |tr -d ','`
+#export cluster_name=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE |grep StackName |grep rlui |awk '{print $2}' |tr -d '"' |tr -d ','`
 echo $cluster_name
+
 create_blueprint=$($ambari_curl $ambari_api/blueprints/simple -d @ambari.blueprint)
 echo $create_blueprint
+
 create_cluster=$($ambari_curl $ambari_api/clusters/${cluster_name} -d @cluster.blueprint)
 echo $create_cluster
 
