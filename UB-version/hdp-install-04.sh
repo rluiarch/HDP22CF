@@ -133,7 +133,7 @@ cat > ambari.blueprint <<-'EOF'
   "Blueprints" : {
     "blueprint_name" : "simple",
     "stack_name" : "HDP",
-    "stack_version" : "2.2"
+    "stack_version" : "2.4"
   }
 }
 EOF
