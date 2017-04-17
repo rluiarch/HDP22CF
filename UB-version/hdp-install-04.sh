@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# HDP 2.4 install using Ambari & Cloudformation
+# HDP 2.2 install using Ambari & Cloudformation
 #
 # Usage: ./install-hdp-04.sh
 #
 # Options:
-#   ambari_host=`hostname` cluster_name=CloudFormationStackName ./hdp-install-04.sh
+#   ambari_host=TheHostName cluster_name=CloudFormationStackName ./hdp-install-04.sh
 #
 # Defaults:
 #   ambari_host=localhost
@@ -46,7 +46,16 @@ hash jq 2>/dev/null || { echo >&2 "I require jq but it's not installed.  Abortin
 hash curl 2>/dev/null || { echo >&2 "I require curl but it's not installed.  Aborting."; exit 1; }
 
 # configure aws: should add a check to see if already configured
-aws configure
+#aws configure
+
+cd ~/
+mkdir -p .aws
+cat > ~/.aws/config << EOF
+[default]
+region = us-east-1
+output = json
+EOF
+
 }
 
 my_aws_prep
@@ -82,13 +91,15 @@ cat > ambari.blueprint <<-'EOF'
     { "name" : "management",
       "components" : [
         { "name" : "HCAT" },
-	{ "name" : "HIVE_CLIENT" },
+        { "name" : "HIVE_CLIENT" },
         { "name" : "HDFS_CLIENT" },
         { "name" : "HIVE_CLIENT" },
         { "name" : "MAPREDUCE2_CLIENT" },
         { "name" : "PIG" },
-        { "name" : "TEZ_CLIENT" },		
+        { "name" : "TEZ_CLIENT" },
+        { "name" : "OOZIE_CLIENT" },
         { "name" : "YARN_CLIENT" },
+        { "name" : "SPARK_CLIENT" },
         { "name" : "ZOOKEEPER_CLIENT" }
       ],
       "cardinality" : "1"
@@ -97,7 +108,7 @@ cat > ambari.blueprint <<-'EOF'
       "components" : [
         { "name" : "APP_TIMELINE_SERVER" },
         { "name" : "HISTORYSERVER" },
-	{ "name" : "HIVE_METASTORE" },
+        { "name" : "HIVE_METASTORE" },
         { "name" : "HIVE_SERVER" },
         { "name" : "JOURNALNODE" },
         { "name" : "MYSQL_SERVER" },
@@ -105,7 +116,9 @@ cat > ambari.blueprint <<-'EOF'
         { "name" : "NODEMANAGER" },
         { "name" : "RESOURCEMANAGER" },
         { "name" : "SECONDARY_NAMENODE" },
-	{ "name" : "WEBHCAT_SERVER" },
+        { "name" : "WEBHCAT_SERVER" },
+        { "name" : "OOZIE_SERVER" },
+        { "name" : "SPARK_JOBHISTORYSERVER" },
         { "name" : "ZOOKEEPER_SERVER" }
       ],
       "cardinality" : "1"
@@ -113,15 +126,17 @@ cat > ambari.blueprint <<-'EOF'
     { "name" : "slaves",
       "components" : [
         { "name" : "DATANODE" },
-	{ "name" : "HCAT" },
+        { "name" : "HCAT" },
         { "name" : "HDFS_CLIENT" },
         { "name" : "HIVE_CLIENT" },
         { "name" : "JOURNALNODE" },
         { "name" : "MAPREDUCE2_CLIENT" },
         { "name" : "NODEMANAGER" },
         { "name" : "PIG" },
-        { "name" : "TEZ_CLIENT" },		
+        { "name" : "TEZ_CLIENT" },
+        { "name" : "OOZIE_CLIENT" },
         { "name" : "YARN_CLIENT" },
+        { "name" : "SPARK_CLIENT" },
         { "name" : "ZOOKEEPER_CLIENT" }
       ],
       "cardinality" : "1+"

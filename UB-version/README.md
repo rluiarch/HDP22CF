@@ -12,6 +12,15 @@ The CF template ended with 03 is configured to use RHEL 6.6 and Ambari 2.1.2 and
 
 The CF template ended with 04 is configured to use Centos 7.2 and Ambari 2.2.1.0 and HDP 2.2, and HDP setup will require hdp-install-04.sh
 
+## launch the CF stack
+
+From the configured AWS CLI workstation, run the following aws command
+
+    aws cloudformation create-stack --stack-name rlui-HDP-T007   \ 
+        --template-body file:///root/CF_template_UB_work/HDP-custom-04.json \
+        --parameters file:///root/CF_template_UB_work/parameter-04.json     \
+        --tags file:///root/CF_template_UB_work/tags.json --capabilities    \
+        CAPABILITY_IAM | tee stack.json
 
 
 ## Setup up HDP clutser
