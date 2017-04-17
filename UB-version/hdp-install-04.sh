@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# HDP 2.2 install using Ambari & Cloudformation
+# HDP 2.4 install using Ambari & Cloudformation
 #
 # Usage: ./install-hdp-04.sh
 #
 # Options:
-#   ambari_host=TheHostName cluster_name=CloudFormationStackName ./hdp-install-04.sh
+#   ambari_host=`hostname` cluster_name=CloudFormationStackName ./hdp-install-04.sh
 #
 # Defaults:
 #   ambari_host=localhost
@@ -81,13 +81,13 @@ cat > ambari.blueprint <<-'EOF'
   "host_groups" : [
     { "name" : "management",
       "components" : [
-        { "name" : "GANGLIA_MONITOR" },
         { "name" : "HCAT" },
+	{ "name" : "HIVE_CLIENT" },
         { "name" : "HDFS_CLIENT" },
         { "name" : "HIVE_CLIENT" },
         { "name" : "MAPREDUCE2_CLIENT" },
         { "name" : "PIG" },
-        { "name" : "TEZ_CLIENT" },
+        { "name" : "TEZ_CLIENT" },		
         { "name" : "YARN_CLIENT" },
         { "name" : "ZOOKEEPER_CLIENT" }
       ],
@@ -96,10 +96,8 @@ cat > ambari.blueprint <<-'EOF'
     { "name" : "master",
       "components" : [
         { "name" : "APP_TIMELINE_SERVER" },
-        { "name" : "GANGLIA_MONITOR" },
-        { "name" : "GANGLIA_SERVER" },
         { "name" : "HISTORYSERVER" },
-        { "name" : "HIVE_METASTORE" },
+	{ "name" : "HIVE_METASTORE" },
         { "name" : "HIVE_SERVER" },
         { "name" : "JOURNALNODE" },
         { "name" : "MYSQL_SERVER" },
@@ -107,7 +105,7 @@ cat > ambari.blueprint <<-'EOF'
         { "name" : "NODEMANAGER" },
         { "name" : "RESOURCEMANAGER" },
         { "name" : "SECONDARY_NAMENODE" },
-        { "name" : "WEBHCAT_SERVER" },
+	{ "name" : "WEBHCAT_SERVER" },
         { "name" : "ZOOKEEPER_SERVER" }
       ],
       "cardinality" : "1"
@@ -115,15 +113,14 @@ cat > ambari.blueprint <<-'EOF'
     { "name" : "slaves",
       "components" : [
         { "name" : "DATANODE" },
-        { "name" : "GANGLIA_MONITOR" },
-        { "name" : "HCAT" },
+	{ "name" : "HCAT" },
         { "name" : "HDFS_CLIENT" },
         { "name" : "HIVE_CLIENT" },
         { "name" : "JOURNALNODE" },
         { "name" : "MAPREDUCE2_CLIENT" },
         { "name" : "NODEMANAGER" },
         { "name" : "PIG" },
-        { "name" : "TEZ_CLIENT" },
+        { "name" : "TEZ_CLIENT" },		
         { "name" : "YARN_CLIENT" },
         { "name" : "ZOOKEEPER_CLIENT" }
       ],
@@ -185,17 +182,13 @@ cat >> cluster.blueprint << 'EOF'
 EOF
 
 ## Create the blueprint & the clsuter
-#export ambari_host=`hostname`
+## export ambari_host=`hostname`
 echo $ambari_host
-
-#export cluster_name=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE |grep StackName |grep rlui |awk '{print $2}' |tr -d '"' |tr -d ','`
+## export cluster_name=`aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE |grep StackName |grep rlui |awk '{print $2}' |tr -d '"' |tr -d ','`
 echo $cluster_name
-
 create_blueprint=$($ambari_curl $ambari_api/blueprints/simple -d @ambari.blueprint)
 echo $create_blueprint
-
 create_cluster=$($ambari_curl $ambari_api/clusters/${cluster_name} -d @cluster.blueprint)
 echo $create_cluster
-
 echo "Check the cluster creation status with:"
 echo "  $ambari_curl $(echo $create_cluster | jq '.href' | tr -d \") | jq '.Requests'"

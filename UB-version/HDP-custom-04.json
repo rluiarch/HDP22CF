@@ -46,14 +46,14 @@
     "WorkerInstanceType" : {
       "Description" : "Instance type for worker node",
       "Type" : "String",
-      "Default" : "m3.medium",
+      "Default" : "m3.large",
       "ConstraintDescription" : "Must be a valid EC2 instance type."
     },
 
     "WorkerInstanceCount" : {
       "Description" : "Number of Worker instances",
       "Type" : "Number",
-      "Default" : "2",
+      "Default" : "3",
       "MinValue" : "1",
       "MaxValue" : "3"
     },
@@ -61,7 +61,7 @@
     "MasterInstanceType" : {
       "Description" : "Instance type for master node",
       "Type" : "String",
-      "Default" : "m3.medium",
+      "Default" : "m3.xlarge",
       "ConstraintDescription" : "Must be a valid EC2 instance type."
     },
 
