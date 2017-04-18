@@ -30,10 +30,10 @@
 
     "HDPSubnet": {
        "Type": "String",
-           "Description": "the subnet ID used for this cluster"
+       "Description": "the subnet ID used for this cluster"
     },
 
-        "VPCZoneID": {
+       "VPCZoneID": {
        "Type": "CommaDelimitedList",
        "Description": "Coma delimited list of subnets"
     },
@@ -71,6 +71,14 @@
       "Default" : "m3.medium",
       "ConstraintDescription" : "Must be a valid EC2 instance type."
     },
+
+    "GatewayInstanceType" : {
+      "Description" : "Instance type for Ambari node",
+      "Type" : "String",
+      "Default" : "m3.medium",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
 
     "WorkerUseEBS" : {
       "Description" : "Use EBS Volumes for the Worker Node",
@@ -183,7 +191,8 @@
             "## Reboot Server\n",
             "## reboot\n"
           ]]}
-        }
+        },
+      "Tags" :  [ { "Key" : "Name", "Value" : "Ambari-node" } ]
       }
     },
 
@@ -260,7 +269,8 @@
             "## Reboot Server\n",
             "## reboot\n"
           ]]}
-        }
+        },
+      "Tags" :  [ { "Key" : "Name", "Value" : "Master-node" } ]
       }
     },
 
@@ -371,8 +381,87 @@
             "## reboot\n"
           ]]}
         }
+
       }
+    },
+
+   "GatewayNode" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "AmbariNode",
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT30M"
+        }
+      },
+      "Properties" : {
+        "BlockDeviceMappings" : [
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } }
+        ],
+        "ImageId" : { "Ref": "ImageId" },
+        "AvailabilityZone" : { "Ref" : "Zone" },
+          "NetworkInterfaces" : [{
+          "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "HDPSubnet" }
+        }],
+        "InstanceType" : { "Ref" : "GatewayInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName" : { "Ref" : "KeyName" },
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/bin/bash\n",
+            "\n",
+            "function error_exit\n",
+            "{\n",
+            " /opt/aws/bin/cfn-signal -e 1 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource GatewayNode\n",
+            " exit 1\n",
+            "}\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Ambari\n",
+            "JAVA_HOME=/etc/alternatives/java_sdk\n",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.1.0/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            " || error_exit 'Ambari repo setup failed'\n",
+            "yum install -y ambari-agent",
+            " || error_exit 'Ambari Agent Installation failed'\n",
+            "sed 's/^hostname=.*/hostname=", {"Fn::GetAtt": ["AmbariNode","PrivateDnsName"] }, "/' -i /etc/ambari-agent/conf/ambari-agent.ini\n",
+            "service ambari-agent start",
+            " || error_exit 'Ambari Agent start-up failed'\n",
+            "\n",
+            "## Install Gateway Software\n",
+            "curl http://172.31.35.3:8000/ub-4.0-833.x86_64.rpm -o /tmp/ub-4.0-833.x86_64.rpm",
+            " || error_exit 'Failed to download Gateway Software'\n",
+            "## yum localinstall -y /tmp/ub-4.0-833.x86_64.rpm",
+            "## || error_exit 'Gateway Software Installation failed'\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref": "AWS::Region"}, " --resource GatewayNode\n",
+            "\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        },
+    "Tags" :  [ { "Key" : "Name", "Value" : "Gateway-node" } ]
+
+       }
+
     }
+
 
   }
 
