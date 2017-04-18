@@ -447,6 +447,8 @@
             "## Install Gateway Software\n",
             "curl http://172.31.35.3:8000/ub-4.0-833.x86_64.rpm -o /tmp/ub-4.0-833.x86_64.rpm",
             " || error_exit 'Failed to download Gateway Software'\n",
+            "yum install -y libaio.x86_64",
+            " || error_exit 'libaio install failed'\n",
             "## yum localinstall -y /tmp/ub-4.0-833.x86_64.rpm",
             "## || error_exit 'Gateway Software Installation failed'\n",
             "## If all went well, signal success\n",
