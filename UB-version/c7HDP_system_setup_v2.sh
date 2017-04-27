@@ -75,3 +75,5 @@ wait
 ##########################################################################################
 # Re-size root partition
 ##(echo u;echo d; echo n; echo p; echo 1; cat /sys/block/xvda/xvda1/start; echo; echo w) | fdisk /dev/xvda || :
+
+echo "completed all tasks"
