@@ -1,0 +1,58 @@
+[
+  {
+    "ParameterKey": "AmbariInstanceType",
+    "ParameterValue": "m3.medium"
+  },
+  {
+    "ParameterKey": "GatewayInstanceType",
+    "ParameterValue": "r3.2xlarge"
+  },
+  {
+    "ParameterKey": "EC2SecurityGroup",
+    "ParameterValue": "sg-9999999"
+  },
+  {
+    "ParameterKey": "HDPSubnet",
+    "ParameterValue": "subnet-9999999"
+  },
+  {
+    "ParameterKey": "ImageId",
+    "ParameterValue": "ami-6d1c2007"
+  },
+  {
+    "ParameterKey": "InstanceProfile",
+    "ParameterValue": "myRole"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "myKey"
+  },
+  {
+    "ParameterKey": "MasterInstanceType",
+    "ParameterValue": "m3.xlarge"
+  },
+  {
+    "ParameterKey": "MasterUseEBS",
+    "ParameterValue": "no"
+  },
+  {
+    "ParameterKey": "VPCZoneID",
+    "ParameterValue": "subnet-9999999"
+  },
+  {
+    "ParameterKey": "WorkerInstanceCount",
+    "ParameterValue": "3"
+  },
+  {
+    "ParameterKey": "WorkerInstanceType",
+    "ParameterValue": "m3.large"
+  },
+  {
+    "ParameterKey": "WorkerUseEBS",
+    "ParameterValue": "no"
+  },
+  {
+    "ParameterKey": "Zone",
+    "ParameterValue": "us-east-1c"
+  }
+]

@@ -23,8 +23,8 @@ The CF template ended with 07 is configured to use Centos 7.2 with "Gateway node
 From the configured AWS CLI workstation, run the following aws command
 
     aws cloudformation create-stack --stack-name rlui-HDP-T007   \ 
-        --template-body file:///root/CF_template_UB_work/HDP-custom-04.json \
-        --parameters file:///root/CF_template_UB_work/parameter-04.json     \
+        --template-body file:///root/CF_template_UB_work/HDP-custom-08.json \
+        --parameters file:///root/CF_template_UB_work/parameter-08.json     \
         --tags file:///root/CF_template_UB_work/tags.json --capabilities    \
         CAPABILITY_IAM | tee stack.json
 
