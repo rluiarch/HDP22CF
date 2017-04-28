@@ -37,15 +37,15 @@ The HDP cluster name will use the stack name e.g. STACKNAME=rlui-HDP-T007
     
  ssh into the Ambrai node (m4.large instance); and become root and run the following command
   
- these steps is only for 03 - 06 version    
+ These steps is only for 03 - 06 version    
    ``curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/hdp-install-04.sh -o hdp-install-04.sh``
    
    ``chmod +x hdp-install-04.sh``
    ``ambari_host=`hostname` cluster_name=rlui-HDP-T007 ./hdp-install-04.sh``
    
- If using 07 template, just do the following step ; hdp-install-06.sh is pre-downloaded on /tmp folder
+ If using 07 - 08 template, just do the following step ; hdp-install-06.sh is pre-downloaded on /tmp folder
 
-   ``ambari_host=`hostname` cluster_name=rlui-HDP-T007 /tmp/hdp-install-06.sh``
+   ``ambari_host=`hostname`.ec2.internal cluster_name=rlui-HDP-T007 /tmp/hdp-install-06.sh``
    
    You will be asked to provide your AWS Key/Secret; since hdp-install.sh use AWS CLI to retrieve all stack component information, and then using sed and jq to assamble the Ambari cluster blue print.
    
