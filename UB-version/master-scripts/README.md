@@ -18,7 +18,7 @@ And requirement for AWS workstation:
 - necessary AWS permission or policy to create EC2, ASG , Read S3 ..etc
 - curl, wget, unzip and jq
    
-   ## jg can be installed from epel on centos or rhel 
+   ## jq can be installed from epel on centos or rhel 
    `` rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm ``
    `` yum install -y jq ``
 
