@@ -20,6 +20,7 @@ And requirement for AWS workstation:
    
    ## jq can be installed from epel on centos or rhel 
    `` rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm ``
+
    `` yum install -y jq ``
 
 - This AWS workstation need to be on the same VPC and subnet of the HDP cluster
