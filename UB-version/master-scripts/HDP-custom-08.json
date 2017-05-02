@@ -284,6 +284,7 @@
         "LaunchConfigurationName" : { "Ref" : "WorkerNodeLaunchConfig" },
         "MinSize" : 1,
         "MaxSize" : { "Ref" : "WorkerInstanceCount" },
+        "Tags": [ { "Value": "Worker-node", "Key": "Name", "PropagateAtLaunch": "true" } ],
         "DesiredCapacity" : { "Ref" : "WorkerInstanceCount" }
       },
       "CreationPolicy": {
