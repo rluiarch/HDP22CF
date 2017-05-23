@@ -42,7 +42,7 @@ service ntpd start
 # Install Oracle JDK 1.8_112
 
 yum install -y wget
-wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u112-b15/jdk-8u112-linux-x64.rpm
+wget --no-check-certificate https://s3.amazonaws.com/unravelrpm/jdk-8u112-linux-x64.rpm
 yum localinstall -y jdk-8u112-linux-x64.rpm
 export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
 
