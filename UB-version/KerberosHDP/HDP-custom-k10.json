@@ -1,0 +1,578 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "CloudFormation template to Deploy four machines for meso in existing VPC and security group",
+  "Parameters" : {
+
+    "KeyName": {
+      "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription" : "Can contain only ASCII characters."
+    },
+
+    "ImageId": {
+      "MinLength": "5",
+      "Type": "String",
+      "Description": "The ID of an existing AMI (e.g., ami-adefacc4)",
+      "ConstraintDescription": "must be a valid EC2 AMI ID"
+    },
+
+      "EC2SecurityGroup": {
+      "Type": "String"
+    },
+
+
+    "InstanceProfile": {
+      "MinLength": "2",
+      "Type": "String",
+      "Description": "The instance role name, not the arn string"
+
+    },
+
+    "HDPSubnet": {
+       "Type": "String",
+       "Description": "the subnet ID used for this cluster"
+    },
+
+       "VPCZoneID": {
+       "Type": "CommaDelimitedList",
+       "Description": "Coma delimited list of subnets"
+    },
+
+    "Zone": {
+      "Type": "String",
+      "Description": "availability zone to launch this cluster"
+    },
+
+    "WorkerInstanceType" : {
+      "Description" : "Instance type for worker node",
+      "Type" : "String",
+      "Default" : "m3.large",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
+    "WorkerInstanceCount" : {
+      "Description" : "Number of Worker instances",
+      "Type" : "Number",
+      "Default" : "3",
+      "MinValue" : "1",
+      "MaxValue" : "3"
+    },
+
+    "MasterInstanceType" : {
+      "Description" : "Instance type for master node",
+      "Type" : "String",
+      "Default" : "m3.xlarge",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
+    "AmbariInstanceType" : {
+      "Description" : "Instance type for Ambari node",
+      "Type" : "String",
+      "Default" : "m3.medium",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+	
+	 "KerberosInstanceType" : {
+      "Description" : "Instance type for Kerberos node",
+      "Type" : "String",
+      "Default" : "t2.medium",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
+    "GatewayInstanceType" : {
+      "Description" : "Instance type for Ambari node",
+      "Type" : "String",
+      "Default" : "m3.medium",
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
+
+    "WorkerUseEBS" : {
+      "Description" : "Use EBS Volumes for the Worker Node",
+      "Default" : "no",
+      "Type" : "String",
+      "AllowedValues" : ["yes","no"],
+      "ConstraintDescription" : "Must be yes or no only."
+    },
+
+    "MasterUseEBS" : {
+      "Description" : "Use EBS Volumes for the Master Node",
+      "Default" : "no",
+      "Type" : "String",
+      "AllowedValues" : ["yes","no"],
+      "ConstraintDescription" : "Must be yes or no only."
+    }
+  },
+
+
+  "Conditions" : {
+
+    "MasterUseEBSBool" : { "Fn::Equals" : [ { "Ref" : "MasterUseEBS" } , "yes" ] },
+    "WorkerUseEBSBool" : { "Fn::Equals" : [ { "Ref" : "WorkerUseEBS" } , "yes" ] }
+
+  },
+
+  "Resources" : {
+
+
+    "AmbariNode" : {
+      "Type" : "AWS::EC2::Instance",
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT30M"
+        }
+      },
+      "Properties" : {
+        "BlockDeviceMappings" : [
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } }
+        ],
+        "ImageId" : { "Ref": "ImageId" },
+        "AvailabilityZone" : { "Ref" : "Zone" },
+          "NetworkInterfaces" : [{
+          "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "HDPSubnet" }
+        }],
+        "InstanceType" : { "Ref" : "AmbariInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName" : { "Ref" : "KeyName" },
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/usr/bin/env bash\n",
+            "region=\"", {"Ref":"AWS::Region" }, "\"\n",
+            "stack=\"", {"Ref":"AWS::StackName" }, "\"\n",
+            "resource=AmbariNode\n",
+            "\n",
+            "error_exit() {\n",
+            "  local line_no=$1\n",
+            "  local exit_code=$2\n",
+            "  /opt/aws/bin/cfn-signal -e ${exit_code}",
+            "     --region ${region}",
+            "     --stack ${stack}",
+            "     --resource ${resource}\n",
+            "  exit ${exit_code}\n",
+            "}\n",
+            "trap 'error_exit ${LINENO} ${?}' ERR\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup_v4.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Ambari\n",
+            "JAVA_HOME=/usr/java/jdk1.8.0_112/jre\n",
+            "yum install -y krb5-workstation\n",
+            "curl https://s3.amazonaws.com/unravelrpm/jce_policy-8.zip -o jce_policy-8.zip\n",
+            "yum install -y unzip\n",
+            "unzip -o -j -q jce_policy-8.zip -d /usr/java/jdk1.8.0_112/jre/lib/security/\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/KerberosHDP/hdp-install-10.sh -o /tmp/hdp-install-10.sh\n",
+                        "chmod a+x /tmp/hdp-install-10.sh\n",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.1.1/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            " || error_exit 'Ambari repo setup failed'\n",
+            "yum install -y ambari-agent",
+            " || error_exit 'Ambari Agent Installation failed'\n",
+            "sed 's/^hostname=.*/hostname=127.0.0.1/' -i /etc/ambari-agent/conf/ambari-agent.ini\n",
+            "service ambari-agent start",
+            " || error_exit 'Ambari Agent start-up failed'\n",
+            "\n",
+            "yum install -y ambari-server",
+            " || error_exit 'Ambari Server Installation failed'\n",
+            "ambari-server setup -j ${JAVA_HOME} -s",
+            " || error_exit 'Ambari Server setup failed'\n",
+            "service ambari-server start",
+            " || error_exit 'Ambari Server start-up failed'\n",
+            "\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e $? ",
+            "   --region ${region}",
+            "   --stack ${stack}",
+            "   --resource ${resource}\n",
+            "\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        },
+      "Tags" :  [ { "Key" : "Name", "Value" : "Ambari-node" } ]
+      }
+    },
+
+    "MasterNode" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "AmbariNode",
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT30M"
+        }
+      },
+      "Properties" : {
+        "BlockDeviceMappings" : {"Fn::If" : ["MasterUseEBSBool",[
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } },
+          { "DeviceName" : "/dev/sdb", "Ebs" : { "VolumeSize" : 500, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdc", "Ebs" : { "VolumeSize" : 500, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } }
+        ],[
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } },
+          { "DeviceName" : "/dev/sdb", "VirtualName": "ephemeral0" },
+          { "DeviceName" : "/dev/sdc", "VirtualName": "ephemeral1" },
+          { "DeviceName" : "/dev/sdd", "VirtualName": "ephemeral2" },
+          { "DeviceName" : "/dev/sde", "VirtualName": "ephemeral3" }
+        ]]},
+        "ImageId" : { "Ref": "ImageId" },
+        "AvailabilityZone" : { "Ref" : "Zone" },
+                "NetworkInterfaces" : [{
+                  "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "HDPSubnet" }
+        }],
+        "InstanceType" : { "Ref" : "MasterInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName" : { "Ref" : "KeyName" },
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/bin/bash\n",
+            "\n",
+            "function error_exit\n",
+            "{\n",
+            " /opt/aws/bin/cfn-signal -e 1 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource MasterNode\n",
+            " exit 1\n",
+            "}\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup_v4.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Ambari\n",
+            "JAVA_HOME=/usr/java/jdk1.8.0_112/jre\n",
+            "yum install -y krb5-workstation\n",
+            "curl https://s3.amazonaws.com/unravelrpm/jce_policy-8.zip -o jce_policy-8.zip\n",
+            "yum install -y unzip\n",
+            "unzip -o -j -q jce_policy-8.zip -d /usr/java/jdk1.8.0_112/jre/lib/security/\n",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.1.1/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            " || error_exit 'Ambari repo setup failed'\n",
+            "yum install -y ambari-agent",
+            " || error_exit 'Ambari Agent Installation failed'\n",
+            "sed 's/^hostname=.*/hostname=", {"Fn::GetAtt": ["AmbariNode","PrivateDnsName"] }, "/' -i /etc/ambari-agent/conf/ambari-agent.ini\n",
+            "service ambari-agent start",
+            " || error_exit 'Ambari Agent start-up failed'\n",
+            "\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref": "AWS::Region"}, " --resource MasterNode\n",
+            "\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        },
+      "Tags" :  [ { "Key" : "Name", "Value" : "Master-node" } ]
+      }
+    },
+
+    "WorkerNodes" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "DependsOn" : "AmbariNode",
+      "Properties" : {
+        "AvailabilityZones" : [ { "Ref": "Zone" } ],
+        "VPCZoneIdentifier" : { "Ref" : "VPCZoneID" },
+        "LaunchConfigurationName" : { "Ref" : "WorkerNodeLaunchConfig" },
+        "MinSize" : 1,
+        "MaxSize" : { "Ref" : "WorkerInstanceCount" },
+        "Tags": [ { "Value": "Worker-node", "Key": "Name", "PropagateAtLaunch": "true" } ],
+        "DesiredCapacity" : { "Ref" : "WorkerInstanceCount" }
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": { "Ref" : "WorkerInstanceCount" },
+          "Timeout": "PT30M"
+        }
+      }
+    },
+
+    "WorkerNodeLaunchConfig"  : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties" : {
+        "BlockDeviceMappings" : {"Fn::If" : ["WorkerUseEBSBool",[
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } },
+          { "DeviceName" : "/dev/sdb", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdc", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdd", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sde", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdf", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdg", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdh", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdi", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } },
+          { "DeviceName" : "/dev/sdj", "Ebs" : { "VolumeSize" : 1000, "VolumeType" : "gp2", "DeleteOnTermination" : "True" } }
+        ],[
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } },
+          { "DeviceName" : "/dev/sdb", "VirtualName": "ephemeral0" },
+          { "DeviceName" : "/dev/sdc", "VirtualName": "ephemeral1" },
+          { "DeviceName" : "/dev/sdd", "VirtualName": "ephemeral2" },
+          { "DeviceName" : "/dev/sde", "VirtualName": "ephemeral3" },
+          { "DeviceName" : "/dev/sdf", "VirtualName": "ephemeral4" },
+          { "DeviceName" : "/dev/sdg", "VirtualName": "ephemeral5" },
+          { "DeviceName" : "/dev/sdh", "VirtualName": "ephemeral6" },
+          { "DeviceName" : "/dev/sdi", "VirtualName": "ephemeral7" },
+          { "DeviceName" : "/dev/sdj", "VirtualName": "ephemeral8" },
+          { "DeviceName" : "/dev/sdk", "VirtualName": "ephemeral9" },
+          { "DeviceName" : "/dev/sdl", "VirtualName": "ephemeral10" },
+          { "DeviceName" : "/dev/sdm", "VirtualName": "ephemeral11" },
+          { "DeviceName" : "/dev/sdn", "VirtualName": "ephemeral12" },
+          { "DeviceName" : "/dev/sdo", "VirtualName": "ephemeral13" },
+          { "DeviceName" : "/dev/sdp", "VirtualName": "ephemeral14" },
+          { "DeviceName" : "/dev/sdq", "VirtualName": "ephemeral15" },
+          { "DeviceName" : "/dev/sdr", "VirtualName": "ephemeral16" },
+          { "DeviceName" : "/dev/sds", "VirtualName": "ephemeral17" },
+          { "DeviceName" : "/dev/sdt", "VirtualName": "ephemeral18" },
+          { "DeviceName" : "/dev/sdu", "VirtualName": "ephemeral19" },
+          { "DeviceName" : "/dev/sdv", "VirtualName": "ephemeral20" },
+          { "DeviceName" : "/dev/sdw", "VirtualName": "ephemeral21" },
+          { "DeviceName" : "/dev/sdx", "VirtualName": "ephemeral22" },
+          { "DeviceName" : "/dev/sdy", "VirtualName": "ephemeral23" }
+        ]]},
+        "ImageId"        : { "Ref": "ImageId" },
+        "SecurityGroups" : [ { "Ref" : "EC2SecurityGroup" } ],
+        "InstanceType"   : { "Ref" : "WorkerInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName"        : { "Ref" : "KeyName" },
+        "AssociatePublicIpAddress" : "true",
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/bin/bash -ex\n",
+            "\n",
+            "function error_exit\n",
+            "{\n",
+            " /opt/aws/bin/cfn-signal -e 1 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource WorkerNodes\n",
+            " exit 1\n",
+            "}\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup_v4.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Ambari\n",
+            "JAVA_HOME=/usr/java/jdk1.8.0_112/jre\n",
+            "yum install -y krb5-workstation\n",
+            "curl https://s3.amazonaws.com/unravelrpm/jce_policy-8.zip -o jce_policy-8.zip\n",
+            "yum install -y unzip\n",
+            "unzip -o -j -q jce_policy-8.zip -d /usr/java/jdk1.8.0_112/jre/lib/security/\n",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.1.1/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            " || error_exit 'Ambari repo setup failed'\n",
+            "yum install -y ambari-agent",
+            " || error_exit 'Ambari Agent Installation failed'\n",
+            "sed 's/^hostname=.*/hostname=", {"Fn::GetAtt": ["AmbariNode","PrivateDnsName"] }, "/' -i /etc/ambari-agent/conf/ambari-agent.ini\n",
+            "service ambari-agent start",
+            " || error_exit 'Ambari Agent start-up failed'\n",
+            "\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource WorkerNodes\n",
+            "\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        }
+
+      }
+    },
+
+   "GatewayNode" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "AmbariNode",
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT30M"
+        }
+      },
+      "Properties" : {
+        "BlockDeviceMappings" : [
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "100", "VolumeType" : "gp2" } },
+                  { "DeviceName" : "/dev/sdb", "VirtualName": "ephemeral0" }
+        ],
+        "ImageId" : { "Ref": "ImageId" },
+        "AvailabilityZone" : { "Ref" : "Zone" },
+          "NetworkInterfaces" : [{
+          "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "HDPSubnet" }
+        }],
+        "InstanceType" : { "Ref" : "GatewayInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName" : { "Ref" : "KeyName" },
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/bin/bash\n",
+            "\n",
+            "function error_exit\n",
+            "{\n",
+            " /opt/aws/bin/cfn-signal -e 1 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource GatewayNode\n",
+            " exit 1\n",
+            "}\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup_v4.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Ambari\n",
+            "JAVA_HOME=/usr/java/jdk1.8.0_112/jre\n",
+            "yum install -y krb5-workstation\n",
+            "curl https://s3.amazonaws.com/unravelrpm/jce_policy-8.zip -o jce_policy-8.zip\n",
+            "yum install -y unzip\n",
+            "unzip -o -j -q jce_policy-8.zip -d /usr/java/jdk1.8.0_112/jre/lib/security/\n",
+            "curl http://public-repo-1.hortonworks.com/ambari/centos7/2.x/updates/2.2.1.1/ambari.repo -o /etc/yum.repos.d/ambari.repo",
+            " || error_exit 'Ambari repo setup failed'\n",
+            "yum install -y ambari-agent",
+            " || error_exit 'Ambari Agent Installation failed'\n",
+            "sed 's/^hostname=.*/hostname=", {"Fn::GetAtt": ["AmbariNode","PrivateDnsName"] }, "/' -i /etc/ambari-agent/conf/ambari-agent.ini\n",
+            "service ambari-agent start",
+            " || error_exit 'Ambari Agent start-up failed'\n",
+            "\n",
+            "## Install Gateway Software\n",
+            "## curl http://172.31.11.252:8000/ub-4.0-833.x86_64.rpm -o /tmp/ub-4.0-833.x86_64.rpm\n",
+            "## curl https://s3.amazonaws.com/unravelrpm/rpms/unravel-4.0-860.x86_64.rpm.20170503T0305Z -o /tmp/ub-4.0-860.x86_64.rpm \n",
+            "curl http://172.31.6.203:8000/unravel-4.0-860.x86_64.rpm.20170503T0305Z -o /tmp/ub-4.0-860.x86_64.rpm",
+            " || error_exit 'Failed to download Gateway Software'\n",
+            "yum install -y libaio.x86_64",
+            " || error_exit 'libaio install failed'\n",
+            "## yum localinstall -y /tmp/ub-4.0-833.x86_64.rpm",
+            "## || error_exit 'Gateway Software Installation failed'\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref": "AWS::Region"}, " --resource GatewayNode\n",
+            "\n",
+            "/usr/bin/mount -a\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        },
+    "Tags" :  [ { "Key" : "Name", "Value" : "Gateway-node" } ]
+
+       }
+
+    },
+	
+   "KerberosNode" : {
+      "Type" : "AWS::EC2::Instance",
+      "DependsOn" : "AmbariNode",
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Count": 1,
+          "Timeout": "PT30M"
+        }
+      },
+      "Properties" : {
+        "BlockDeviceMappings" : [
+          { "DeviceName" : "/dev/sda1", "Ebs" : { "VolumeSize" : "50", "VolumeType" : "gp2" } }
+         ],
+        "ImageId" : { "Ref": "ImageId" },
+        "AvailabilityZone" : { "Ref" : "Zone" },
+          "NetworkInterfaces" : [{
+          "GroupSet"                 : [ { "Ref" : "EC2SecurityGroup" } ],
+          "AssociatePublicIpAddress" : "true",
+          "DeviceIndex"              : "0",
+          "DeleteOnTermination"      : "true",
+          "SubnetId"                 : { "Ref" : "HDPSubnet" }
+        }],
+        "InstanceType" : { "Ref" : "KerberosInstanceType" },
+        "IamInstanceProfile" : { "Ref": "InstanceProfile" },
+        "KeyName" : { "Ref" : "KeyName" },
+        "UserData": {
+          "Fn::Base64": { "Fn::Join": ["",[
+            "#!/bin/bash\n",
+            "\n",
+            "function error_exit\n",
+            "{\n",
+            " /opt/aws/bin/cfn-signal -e 1 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref":"AWS::Region"}, " --resource KerberosNode\n",
+            " exit 1\n",
+            "}\n",
+            "\n",
+            "## Install and Update CloudFormation\n",
+            "rpm -Uvh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm || :\n",
+            "yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm\n",
+            "yum update -y aws-cfn-bootstrap\n",
+            "ln -s /usr/local/lib/python2.7/site-packages/cfnbootstrap /usr/lib/python2.7/site-packages/cfnbootstrap\n",
+            "## /sbin/service cfn-hup restart\n",
+            "\n",
+            "## Running setup script\n",
+            "curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/c7HDP_system_setup_v4.sh -o /tmp/c7HDP_system_setup.sh",
+            " || error_exit 'Failed to download setup script'\n",
+            "chmod a+x /tmp/c7HDP_system_setup.sh\n",
+            "/tmp/c7HDP_system_setup.sh > /tmp/c7HDP_system_setup.log 2>&1",
+            " || error_exit 'Install failed.See c7HDP_system_setup.log for details'\n",
+            "\n",
+            "## Install Kerberos Server\n",
+            "JAVA_HOME=/usr/java/jdk1.8.0_112/jre\n",
+            "yum install -y krb5-server krb5-libs krb5-workstation\n",
+            "yum install -y unzip\n",
+            "yum install -y gcc-c++\n",
+            "## curl http://www.issihosts.com/haveged/haveged-1.9.1.tar.gz -o /tmp/haveged-1.9.1.tar.gz\n",
+            "curl https://s3.amazonaws.com/unravelrpm/haveged-1.9.1.tar.gz -o /tmp/haveged-1.9.1.tar.gz\n",
+            "yum install -y gzip\n",
+            "yum install -y unzip\n",
+            "yum install -y tar\n",
+            "tar -zxvf /tmp/haveged-1.9.1.tar.gz -C /tmp\n",
+            "rm -rf /etc/krb5.conf\n",
+            "curl https://s3.amazonaws.com/unravelrpm/krb5.conf -o /etc/krb5.conf\n",
+            "curl https://s3.amazonaws.com/unravelrpm/setup_kerberos_basic.sh -o /tmp/setup_kerberos_basic.sh\n",
+            "chmod a+x /tmp/setup_kerberos_basic.sh\n",
+            "/tmp/setup_kerberos_basic.sh > /tmp/setup_kerberos_basic.log 2>&1\n",            
+            "\n",
+            "## If all went well, signal success\n",
+            "/opt/aws/bin/cfn-signal -e 0 --stack ", {"Ref":"AWS::StackName"}, " --region ", {"Ref": "AWS::Region"}, " --resource KerberosNode\n",
+            "\n",
+            "## Reboot Server\n",
+            "## reboot\n"
+          ]]}
+        },
+    "Tags" :  [ { "Key" : "Name", "Value" : "Keberos-node" } ]
+
+       }
+
+    }	
+
+
+  }
+
+}

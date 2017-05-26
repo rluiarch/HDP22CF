@@ -1,0 +1,62 @@
+[
+  {
+    "ParameterKey": "AmbariInstanceType",
+    "ParameterValue": "m3.medium"
+  },
+  {
+    "ParameterKey": "GatewayInstanceType",
+    "ParameterValue": "r3.2xlarge"
+  },
+  {
+    "ParameterKey": "KerberosInstanceType",
+    "ParameterValue": "t2.medium"
+  },
+  {
+    "ParameterKey": "EC2SecurityGroup",
+    "ParameterValue": "sg-a15256de"
+  },
+  {
+    "ParameterKey": "HDPSubnet",
+    "ParameterValue": "subnet-7b8c863d"
+  },
+  {
+    "ParameterKey": "ImageId",
+    "ParameterValue": "ami-6d1c2007"
+  },
+  {
+    "ParameterKey": "InstanceProfile",
+    "ParameterValue": "pwxRole"
+  },
+  {
+    "ParameterKey": "KeyName",
+    "ParameterValue": "rlui-new"
+  },
+  {
+    "ParameterKey": "MasterInstanceType",
+    "ParameterValue": "m3.xlarge"
+  },
+  {
+    "ParameterKey": "MasterUseEBS",
+    "ParameterValue": "no"
+  },
+  {
+    "ParameterKey": "VPCZoneID",
+    "ParameterValue": "subnet-7b8c863d"
+  },
+  {
+    "ParameterKey": "WorkerInstanceCount",
+    "ParameterValue": "3"
+  },
+  {
+    "ParameterKey": "WorkerInstanceType",
+    "ParameterValue": "m3.large"
+  },
+  {
+    "ParameterKey": "WorkerUseEBS",
+    "ParameterValue": "no"
+  },
+  {
+    "ParameterKey": "Zone",
+    "ParameterValue": "us-east-1c"
+  }
+]
