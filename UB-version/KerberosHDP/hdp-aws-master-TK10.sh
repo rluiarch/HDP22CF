@@ -32,7 +32,7 @@ for NODE in AmbariNode MasterNode GatewayNode WorkerNodes KerberosNode; do
    echo "${NODE} PublicDNS Name = ${NODEPUBDNS}"
 done
 
-rm -rf /tmp/kerberos_clients
+sudo rm -rf /tmp/kerberos_clients
 
 echo -e "\n Internal DNS Names of all nodes in this AWS HDP cluster ${1}"
 echo " "
@@ -52,8 +52,16 @@ echo "KerberosNode PrivateDNS Name = ${KERBEROS_NODE}"
 AMBARI_HOST=`aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" "Name=tag:aws:cloudformation:logical-id,Values=AmbariNode" "Name=tag:aws:cloudformation:stack-name,Values=${1}" --query "Reservations[].Instances[].[PrivateDnsName]" --output text`
 
 
-echo "ambari_host=${AMBARI_HOST} cluster_name=${1} /tmp/hdp-install-10.sh"
-ambari_host=${AMBARI_HOST} cluster_name=${1} /tmp/hdp-install-10.sh
+# Remove the old hdp-install script on AWS workstation temp folder
+
+sudo rm -rf /tmp/hdp-install-*.sh
+
+curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/KerberosHDP/hdp-install-08.sh -o /tmp/hdp-install-08.sh
+
+sudo chmod a+x /tmp/hdp-install-08.sh
+
+echo "ambari_host=${AMBARI_HOST} cluster_name=${1} /tmp/hdp-install-08.sh"
+ambari_host=${AMBARI_HOST} cluster_name=${1} /tmp/hdp-install-08.sh
 
 echo -e "\n Ambari HDP cluster setup is started, it will takes 10-15 minutes to complete, please wait"
 
@@ -75,6 +83,20 @@ done
 
 echo -e "\n Ambari HDP cluster setup is completed"
 echo -e "\n Please check Ambari cluster status at http://${AMBARI_PHOST}:8080"
+
+# Kerberoize HDP
+
+sudo rm -rf /tmp/hdp_kerberized.sh
+sudo rm -rf /tmp/payload
+sudo rm -rf /tmp/payload_credential
+
+
+echo -e "\n Setup kerberos HDP"
+echo -e "\n Kerberoize HDP will take 15-20+ minutes, please wait"
+curl https://raw.githubusercontent.com/rluiarch/HDP22CF/master/UB-version/KerberosHDP/hdp_kerberized.sh -o /tmp/hdp_kerberized.sh
+sudo chmod a+x /tmp/hdp_kerberized.sh
+
+/tmp/hdp_kerberized.sh ${1} > /tmp/hdp_kerberized_`date +%Y%m%d-%H:%M:%S`.log 
 
 
 # Installing UnRavelData Software on Gateway Node
