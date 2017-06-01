@@ -100,4 +100,14 @@ wait
 ##########################################################################################
 # Re-size root partition
 ##(echo u;echo d; echo n; echo p; echo 1; cat /sys/block/xvda/xvda1/start; echo; echo w) | fdisk /dev/xvda || :
+
+## Check if cfn-signal is installed or not
+
+if [ ! -f /opt/aws/bin/cfn-signal ]; then
+   echo "aws cfn-signal is not installed, installing now"
+   yum install -y https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-18.amzn1.noarch.rpm
+else
+   echo "aws cfn-signal is already installed"
+fi
+
 echo "completed all tasks on c7HDP_system_setup_v4.sh"
